@@ -45,8 +45,8 @@ def obtenerSucesoresMM(state):
   # Possible directions for moving the blank space
   directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
-  # Create a copy of the state to avoid modifying the original
-  newState = state[:]
+  # Crear nueva lista de sublistas, para modificar newState sin alterar state
+  newState = [fila[:] for fila in state]
 
   # Initialize an empty list to store successors
   successors = []
@@ -68,12 +68,13 @@ def obtenerSucesoresMM(state):
       # Calculate the heuristic value for the new state
       heuristic_value = heuristica(newState)
 
-      # Append the new state and its heuristic to the successors list
-      successors.append((heuristic_value, newState))  # Return a tuple
+      # Agregar valor heurístico sin alterar el valor de state
+      successors.append((heuristic_value, [fila[:] for fila in newState]))   # Return a tuple
 
       # Swap the elements back to their original positions (for the next iteration)
       newState[row][col], newState[newRow][newCol] = newState[newRow][newCol], newState[row][col]
 
+  # Devolver lista de sucesores
   return successors
 
 # Resolver Puzzle
@@ -142,9 +143,9 @@ Pseudocódigo:
 # Hacer la función del algoritmo MM (Meet in the Middle) para resolver el puzzle del 8
 
 def mmSolver(initialState):
-  currentStateF = initialState
+  goalState = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
   priorityQueueF = [(heuristica(initialState), initialState)]
-  priorityQueueB = [(heuristica([[1, 2, 3], [4, 5, 6], [7, 8, 0]]), [[1, 2, 3], [4, 5, 6], [7, 8, 0]])]
+  priorityQueueB = [(heuristica(initialState), goalState)]
   visitedF = set()
   visitedB = set()
   visitedStatesF = []
@@ -163,34 +164,35 @@ def mmSolver(initialState):
     visitedStatesB.append([fila[:] for fila in currentStateB])
 
     # Check if solution found
-    if currentStateF == currentStateB:
+    if tuple(map(tuple, currentStateF)) in visitedB:
       solution = currentStateF
+      break
+    if tuple(map(tuple, currentStateB)) in visitedF:
+      solution = currentStateB
       break
 
     successorsF = obtenerSucesoresMM(currentStateF)
     successorsB = obtenerSucesoresMM(currentStateB)
 
-    for child, _ in successorsF:
+    for heuristic_value, child in successorsF:
       # Skip explored states and those exceeding minimum cost
-      if tuple(map(tuple, child)) in visitedF or hF + obtenerSucesoresMM(child)[0][0] > U:
-        continue
-      heapq.heappush(priorityQueueF, (obtenerSucesoresMM(child), child))
-      visitedF.add(tuple(map(tuple, child)))
-      visitedStatesF.append([fila[:] for fila in child])
-      # Check for meeting point (solution)
-      if tuple(map(tuple, child)) in visitedB:
-        U = min(U, hF + hB)
+      if tuple(map(tuple, child)) not in visitedF:
+        heapq.heappush(priorityQueueF, (heuristic_value, child))
+        visitedF.add(tuple(map(tuple, child)))
+        visitedStatesF.append([fila[:] for fila in child])
+        # Check for meeting point (solution)
+        if tuple(map(tuple, child)) in visitedB:
+          U = min(U, heuristic_value + hB)
 
-    for child, _ in successorsB:
+    for heuristic_value, child in successorsB:
       # Skip explored states and those exceeding minimum cost
-      if tuple(map(tuple, child)) in visitedB or hB + obtenerSucesoresMM(child)[0][0] > U:
-        continue
-      heapq.heappush(priorityQueueB, (obtenerSucesoresMM(child), child))
-      visitedB.add(tuple(map(tuple, child)))
-      visitedStatesB.append([fila[:] for fila in child])
-      # Check for meeting point (solution)
-      if tuple(map(tuple, child)) in visitedF:
-        U = min(U, hF + hB)
+      if tuple(map(tuple, child)) not in visitedB:
+        heapq.heappush(priorityQueueB, (heuristic_value, child))
+        visitedB.add(tuple(map(tuple, child)))
+        visitedStatesB.append([fila[:] for fila in child])
+        # Check for meeting point (solution)
+        if tuple(map(tuple, child)) in visitedF:
+          U = min(U, heuristic_value + hF)
 
   return visitedStatesF + visitedStatesB, solution
 
@@ -225,4 +227,4 @@ start_time = time.perf_counter_ns()
 movimientos, solucion = mmSolver(tableroInicial)
 mmSolver_time = (time.perf_counter_ns() - start_time)*1e-9
 mostrarMovimientos(movimientos)
-print(f"Solución en {len(movimientos)} movimientos:         Tiempo de ejecución: {mmSolver_time} s")
+print(f"Solución en {len(movimientos)} movimientos:         Tiempo de ejecución: {mmSolver_time} s wiiiii")
