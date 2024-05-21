@@ -41,7 +41,7 @@ def isSafe(board, row, col):
 
 ## Algoritmo A*
 
-def solveNQueens(board, col): # board es el tablero, col es la columna actual que se está evaluando en la recursión
+def solveNQueens(board = [[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0]], col = 0): # board es el tablero, col es la columna actual que se está evaluando en la recursión
     if col == 8:
         print(board)
         return board
@@ -120,14 +120,14 @@ ejemplochessboard = [[0, 0, 1, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0],
                      [1, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 1, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 0, 0, 0, 0],
                      [0, 1, 0, 0, 0, 0, 0, 0]]
 
 print("---- A* Algorithm ----\n")
-drawBoard(initialchessboard)
-solucion = solveNQueens(initialchessboard, 0)
+drawBoard(ejemplochessboard)
+solucion = solveNQueens(ejemplochessboard, 4)
 print("---- Solución ----\n")
 drawBoard(solucion)
 
