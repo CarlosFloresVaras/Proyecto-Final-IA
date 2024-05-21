@@ -33,34 +33,9 @@ def obtenerSucesores(puzzleState):
         if 0 <= newFila < 3 and 0 <= newColumna < 3:
             newState = [fila[:] for fila in puzzleState]  # Copia del tablero actual
             newState[filaV][columnaV], newState[newFila][newColumna] = newState[newFila][newColumna], newState[filaV][columnaV]
-            sucesores.append((newState, (newFila, newColumna)))
+            sucesores.append(newState)
     
     return sucesores
-
-def obtenerSucesoresMM(state):
-    # Possible directions for moving the blank space
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    
-    # Initialize an empty list to store successors
-    successors = []
-    # Get the row and column indices of the blank space
-    row, col = obtenerHueco(state)
-    # Iterate over possible directions
-    for dx, dy in directions:
-        # Calculate new row and column indices
-        newRow = row + dy
-        newCol = col + dx
-        # Check if the new indices are within the board bounds
-        if 0 <= newRow < 3 and 0 <= newCol < 3:
-            # Create a copy of the state to avoid modifying the original
-            newState = [fila[:] for fila in state]
-            # Swap the blank space with the element at the new indices
-            newState[row][col], newState[newRow][newCol] = newState[newRow][newCol], newState[row][col]
-            # Calculate the heuristic value for the new state
-            heuristic_value = heuristica(newState)
-            # Append the new state and its heuristic to the successors list
-            successors.append((heuristic_value, newState))
-    return successors
 
 # Resolver Puzzle
 
@@ -84,7 +59,7 @@ def astarSolver(initialState):
             solution = currentState
             break
         successors = obtenerSucesores(currentState)
-        for child, _ in successors:
+        for child in successors:
             # Si no se ha explorado el estado actual, agregar a la cola de prioridad
             if tuple(map(tuple, child)) not in visited:
                 heapq.heappush(priorityQueue, (heuristica(child), child))
@@ -93,53 +68,81 @@ def astarSolver(initialState):
     return visitedStates, solution
 
 ## Algoritmo MM (Meet in the Middle)
-
 def mmSolver(initialState):
     goalState = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
-    priorityQueueF = [(heuristica(initialState), initialState, 0)]
-    priorityQueueB = [(heuristica(goalState), goalState, 0)]
-    visitedF = {}
-    visitedB = {}
-    visitedStatesF = []
-    visitedStatesB = []
-    solution = None
-    U = float("inf")
+    
+    # Definir colas de prioridad y conjuntos de visitados para ambas direcciones
+    forwardQueue = [(heuristica(initialState), initialState)]
+    backwardQueue = [(heuristica(goalState), goalState)]
+    
+    # Diccionario de tableros visitados (key: tablero en forma de tupla de tuplas, value: None)
+    forwardVisited = {tuple(map(tuple, initialState)): None}
+    backwardVisited = {tuple(map(tuple, goalState)): None}
+    
+    # Listas para almacenar los estados de los tableros visitados
+    forwardVisitedStates = []
+    backwardVisitedStates = []
 
-    while priorityQueueF and priorityQueueB:
-        # Extract state with lowest heuristic from forward queue
-        if priorityQueueF:
-            hF, currentStateF, gF = heapq.heappop(priorityQueueF)
-            # Check if the state is already visited in backward direction
-            if tuple(map(tuple, currentStateF)) in visitedB:
-                solution = currentStateF
-                break
-            visitedF[tuple(map(tuple, currentStateF))] = gF
-            visitedStatesF.append([fila[:] for fila in currentStateF])
-            successorsF = obtenerSucesoresMM(currentStateF)
-            for heuristic_value, child in successorsF:
-                g = gF + 1
-                if tuple(map(tuple, child)) not in visitedF or g < visitedF[tuple(map(tuple, child))]:
-                    heapq.heappush(priorityQueueF, (heuristic_value + g, child, g))
-                    visitedF[tuple(map(tuple, child))] = g
+    # Variable para almacenar el punto de encuentro y los estados visitados
+    meetingPoint = None
 
-        # Extract state with lowest heuristic from backward queue
-        if priorityQueueB:
-            hB, currentStateB, gB = heapq.heappop(priorityQueueB)
-            # Check if the state is already visited in forward direction
-            if tuple(map(tuple, currentStateB)) in visitedF:
-                solution = currentStateB
-                break
-            visitedB[tuple(map(tuple, currentStateB))] = gB
-            visitedStatesB.append([fila[:] for fila in currentStateB])
-            successorsB = obtenerSucesoresMM(currentStateB)
-            for heuristic_value, child in successorsB:
-                g = gB + 1
-                if tuple(map(tuple, child)) not in visitedB or g < visitedB[tuple(map(tuple, child))]:
-                    heapq.heappush(priorityQueueB, (heuristic_value + g, child, g))
+    while forwardQueue and backwardQueue:
+        # Expandir el nodo con menor costo heurístico en la búsqueda hacia adelante
+        _, forwardState = heapq.heappop(forwardQueue)
+        forwardVisitedStates.append([fila[:] for fila in forwardState]) # Crear copia profunda de cada fila de forwardState
+        
+        # Si el estado extraído se encuentra en la búsqueda hacia atrás, actualizar meetingPoint
+        if tuple(map(tuple, forwardState)) in backwardVisited:
+            meetingPoint = forwardState
+            break
+        
+        # Obtener sucesores del estado extraído
+        for child in obtenerSucesores(forwardState):
+            childTuple = tuple(map(tuple, child))
+            # Si el sucesor no se ha visitado, agregar a visitados de forward y a forwardQueue
+            if childTuple not in forwardVisited:
+                forwardVisited[childTuple] = tuple(map(tuple, forwardState))
+                heapq.heappush(forwardQueue, (heuristica(child), child))
+        
+        # ~~~~~~~~~~ BÚSQUEDA HACIA ATRÁS ~~~~~~~~~~~
+        
+        # Expandir el nodo con menor costo heurístico en la búsqueda hacia atrás
+        _, backwardState = heapq.heappop(backwardQueue)
+        backwardVisitedStates.append([fila[:] for fila in backwardState])
+        
+        # Si el estado extraído se encuentra en la búsqueda hacia adelante, actualizar meetingPoint
+        if tuple(map(tuple, backwardState)) in forwardVisited:
+            meetingPoint = backwardState
+            break
+        
+        # Obtener sucesores del estado extraído
+        for child in obtenerSucesores(backwardState):
+            childTuple = tuple(map(tuple, child))
+            # Si el sucesor no se ha visitado, agregar a visitados de backward y a backwardQueue
+            if childTuple not in backwardVisited:
+                backwardVisited[childTuple] = tuple(map(tuple, backwardState))
+                heapq.heappush(backwardQueue, (heuristica(child), child))
 
-    # Devolver todos los movimientos realizados y la solución
-    return visitedStatesF + visitedStatesB, solution
+    # Si se encuentra un meeting point, reconstruir camino desde el estado inicial hasta el final
+    if meetingPoint:
+        path = []
+        state = tuple(map(tuple, meetingPoint)) # Convertir meetingPoint a una tupla de tuplas
+        while state:
+            path.append(state)
+            state = forwardVisited[state] # Actualizar state al estado previo
+        path.reverse()
+        
+        state = tuple(map(tuple, meetingPoint))
+        state = backwardVisited[state] # Estado previo de backwardVisited
+        while state:
+            path.append(state)
+            state = backwardVisited[state]
+        
+        # Devolver camino en forma de lista y el meetingPoint
+        return [list(map(list, p)) for p in path], meetingPoint
 
+    # Devolver todos los movimientos realizados y el punto de encuentro
+    return forwardVisitedStates + backwardVisitedStates, meetingPoint
 
 def mostrarMovimientos(visitedStates):
     for movimiento, estado in enumerate(visitedStates, start=1):
@@ -154,21 +157,29 @@ tableroInicial = [
     [6, 7, 8]
 ]
 
-
 print("---- A* Algorithm ---- ")
-start_time = time.perf_counter_ns()      # Agregamos 'start_time' para medir el tiempo de ejecución por cada algoritmo, se repitira esta línea por cada algoritmo
-movimientos, solucion = astarSolver(tableroInicial)
-astarSolver_time = (time.perf_counter_ns() - start_time)*1e-9     # Current time - start time = tiempo de ejecución
-mostrarMovimientos(movimientos)
-print(f"Solución en {len(movimientos)} movimientos:         Tiempo de ejecución: {astarSolver_time} s")
-
-for fila in solucion:
-    print(" ".join(map(str, fila)))
-
-print("\n---- MM Algorithm ---- ")
 start_time = time.perf_counter_ns()
-movimientos, solucion = mmSolver(tableroInicial)
-mmSolver_time = (time.perf_counter_ns() - start_time)*1e-9
+movimientos, solucion = astarSolver(tableroInicial)
+astarSolver_time = (time.perf_counter_ns() - start_time) * 1e-9
 mostrarMovimientos(movimientos)
-print(f"Solución en {len(movimientos)} movimientos:         Tiempo de ejecución: {mmSolver_time} s wiiiii")
+print(f"Solución en {len(movimientos)} movimientos: Tiempo de ejecución: {astarSolver_time} s")
 
+if solucion:
+    for fila in solucion:
+        print(" ".join(map(str, fila)))
+else:
+    print("No se encontró solución con A*")
+
+print("---- Meet in the Middle Algorithm ----")
+start_time = time.perf_counter_ns()
+movimientos_mm, meetingPoint = mmSolver(tableroInicial)
+mmSolver_time = (time.perf_counter_ns() - start_time) * 1e-9
+mostrarMovimientos(movimientos_mm)
+print(f"Solución en {len(movimientos_mm)} movimientos: Tiempo de ejecución: {mmSolver_time} s a ver nmms")
+
+if meetingPoint:
+    print("Meeting-point")
+    for fila in meetingPoint:
+        print(" ".join(map(str, fila)))
+else:
+    print("No se encontró solución con MM")
