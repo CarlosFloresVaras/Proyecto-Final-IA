@@ -2,217 +2,213 @@ import heapq
 import time
 from colorama import Fore, Back, Style, init
 
-# Eight Queens Problem
-
-# Funcion que dibuja el tablero de ajedrez con lineas de separación y color de las casillas y coloca las reinas en sus posiciones con un "♛	&#x265b;""
-
+# Función que dibuja el tablero de ajedrez con las reinas en sus posiciones
 def drawBoard(chessboard):
-        for i in range(8):
-                        for j in range(8):
-                                # Si la casilla tiene un 1, colocar una reina
-                                if chessboard[i][j] == 1:
-                                        print("Q ", end="") # \033[31m es el color rojo
-                                else:
-                                        # Si la suma de i y j es par, la casilla es blanca
-                                        if (i+j)%2 == 0:
-                                                print("□ ", end="") # \033[47m es el color blanco
-                                        else:
-                                                print("■ ", end="")
-                        print()
+    for i in range(8):
+        for j in range(8):
+            if chessboard[i][j] == 1:
+                print("Q ", end="")
+            else:
+                if (i + j) % 2 == 0:
+                    print("□ ", end="")
+                else:
+                    print("■ ", end="")
         print()
-    
+    print()
 
-# Resolver Puzzle Eight con A* y MM
-
-# Heurística para el problema de las 8 reinas
-def isSafe(board, row, col):
-    for x in range(col):        # Check the row on the left side
-        if board[row][x] == 1:  # Check if there is a queen in the left side
-            return False        # Return False if there is a queen
-    for x, y in zip(range(row, -1, -1), range(col, -1, -1)):    # Check upper diagonal on left side
-        if board[x][y] == 1:    # Check if there is a queen in the upper left diagonal
-            return False        # Return False if there is a queen
-    for x, y in zip(range(row, 8, 1), range(col, -1, -1)):      # Check lower diagonal on left side
-        if board[x][y] == 1:    # Check if there is a queen in the lower left diagonal
-            return False        # Return False if there is a queen
-    return True
-
-## Algoritmo A*
-
-def solveNQueens(board, col, movimientos =  []): # board es el tablero, col es la columna actual que se está evaluando en la recursión
-    movimientos.append(board)
-    if col == 8:
-        print(board)
-        return movimientos, board
-    for i in range(8):  # Iterate over each row in the current column save the movements made movimientos.append(board)
-        if isSafe(board, i, col):    # Check if the queen can be placed in the current row and column
-            board[i][col] = 1
-            if solveNQueens(board, col + 1):
-                return movimientos, board
-            board[i][col] = 0
-    return movimientos, "No se encontró una solución"
-
-## Algoritmo MM (Meet in the Middle)
-
-import heapq
-
-# Función heurística para el problema de las 8 reinas
+# Función heurística para el problema de las 8 reinas (número de conflictos)
 def heuristic(board):
     conflicts = 0
     for i in range(8):
         for j in range(8):
             if board[i][j] == 1:
-                # Verificar conflictos en la misma fila
+                # Verificar conflictos en la misma fila y columna
                 for k in range(8):
                     if k != j and board[i][k] == 1:
                         conflicts += 1
-                # Verificar conflictos en la misma columna
-                for k in range(8):
                     if k != i and board[k][j] == 1:
                         conflicts += 1
-                # Verificar conflictos en la diagonal principal
-                k, l = i - min(i, j), j - min(i, j)
-                while k < 8 and l < 8:
-                    if k != i and l != j and board[k][l] == 1:
+                # Verificar conflictos en las diagonales
+                for k in range(1, 8):
+                    if i + k < 8 and j + k < 8 and board[i + k][j + k] == 1:
                         conflicts += 1
-                    k += 1
-                    l += 1
-                # Verificar conflictos en la diagonal secundaria
-                k, l = i - min(i, 7 - j), j + min(i, 7 - j)
-                while k < 8 and l >= 0:
-                    if k != i and l != j and board[k][l] == 1:
+                    if i + k < 8 and j - k >= 0 and board[i + k][j - k] == 1:
                         conflicts += 1
-                    k += 1
-                    l -= 1
+                    if i - k >= 0 and j + k < 8 and board[i - k][j + k] == 1:
+                        conflicts += 1
+                    if i - k >= 0 and j - k >= 0 and board[i - k][j - k] == 1:
+                        conflicts += 1
     return conflicts
 
-# Algoritmo MM (Meet in the Middle)
-def solveNQueensMM():
-    # Inicializar tablero con todas las reinas en la primera fila
-    board = [[0] * 8 for _ in range(8)]
+# Función para verificar si es seguro colocar una reina en una posición dada
+def isSafe(board, row, col):
+    for x in range(col):
+        if board[row][x] == 1:
+            return False
+    for x, y in zip(range(row, -1, -1), range(col, -1, -1)):
+        if board[x][y] == 1:
+            return False
+    for x, y in zip(range(row, 8, 1), range(col, -1, -1)):
+        if board[x][y] == 1:
+            return False
+    return True
+
+# Algoritmo A* para resolver el problema de las 8 reinas
+def solveNQueensAStar():
+    # Inicializar el tablero vacío
+    initial_board = [[0] * 8 for _ in range(8)]
+    open_list = []
+    heapq.heappush(open_list, (0, 0, initial_board))  # (f_score, number_of_queens_placed, board)
+    
+    closed_list = set()
+    
+    while open_list:
+        f, g, board = heapq.heappop(open_list)
+        board_tuple = tuple(tuple(row) for row in board)
+        
+        if board_tuple in closed_list:
+            continue
+        
+        closed_list.add(board_tuple)
+        
+        if g == 8:  # Si se han colocado 8 reinas, se ha encontrado una solución
+            return board
+        
+        for row in range(8):
+            if board[row][g] == 0 and isSafe(board, row, g):
+                new_board = [r[:] for r in board]
+                new_board[row][g] = 1
+                new_g = g + 1
+                new_h = heuristic(new_board)
+                heapq.heappush(open_list, (new_g + new_h, new_g, new_board))
+    
+    return None  # No se encontró solución
+
+# MM Algorithm
+
+def getSuccessors(board):
+    successors = []
     for i in range(8):
-        board[0][i] = 1
+        for j in range(8):
+            if board[i][j] == 1:
+                for k in range(8):
+                    if board[k][j] == 0:
+                        new_board = [list(row) for row in board]
+                        new_board[i][j] = 0
+                        new_board[k][j] = 1
+                        successors.append(new_board)
+                    if board[i][k] == 0:
+                        new_board = [list(row) for row in board]
+                        new_board[i][j] = 0
+                        new_board[i][k] = 1
+                        successors.append(new_board)
+                k, l = i - min(i, j), j - min(i, j)
+                while k < 8 and l < 8:
+                    if board[k][l] == 0:
+                        new_board = [list(row) for row in board]
+                        new_board[i][j] = 0
+                        new_board[k][l] = 1
+                        successors.append(new_board)
+                    k += 1
+                    l += 1
+                k, l = i - min(i, 7 - j), j + min(i, 7 - j)
+                while k < 8 and l >= 0:
+                    if board[k][l] == 0:
+                        new_board = [list(row) for row in board]
+                        new_board[i][j] = 0
+                        new_board[k][l] = 1
+                        successors.append(new_board)
+                    k += 1
+                    l -= 1
+    return successors
+
+def mmSolver(initialState):
+    goalState = [[0, 0, 0, 0, 1, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 1, 0],
+                 [0, 0, 1, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 1, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 1],
+                 [1, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 1, 0, 0, 0, 0],
+                 [0, 1, 0, 0, 0, 0, 0, 0]]
+
+    forwardQueue = [(heuristic(initialState), initialState)]
+    backwardQueue = [(heuristic(goalState), goalState)]
+
+    def list_to_tuple(lst):
+        return tuple(tuple(sub) for sub in lst)
+
+    initialStateTuple = list_to_tuple(initialState)
+    goalStateTuple = list_to_tuple(goalState)
     
-    # Inicializar conjuntos de tableros a expandir
-    openForward = [(heuristic(board), board)]
-    openBackward = [(heuristic(board), board)]
-    heapq.heapify(openForward)
-    heapq.heapify(openBackward)
-    
-    # Inicializar la variable de límite superior
-    upperLimit = float('inf')
-    
-    while openForward and openBackward:
-        # Determinar el valor de C
-        minHeuristic = min(openForward[0][0], openBackward[0][0])
-        
-        # Verificar si se ha alcanzado el límite superior de la heurística
-        if upperLimit <= max(minHeuristic, openForward[0][0], openBackward[0][0]):
-            return upperLimit, None  # No hay solución
-        
-        # Seleccionar el conjunto apropiado para expandir
-        if minHeuristic == openForward[0][0]:
-            current, board = heapq.heappop(openForward)
-            # Expandir en la dirección forward
-            for i in range(8):
-                for j in range(8):
-                    if board[i][j] == 1:
-                        for k in range(8):
-                            if board[k][j] != 1:
-                                newBoard = [row[:] for row in board]
-                                newBoard[i][j] = 0
-                                newBoard[k][j] = 1
-                                heapq.heappush(openForward, (heuristic(newBoard), newBoard))
-                                break
-        else:
-            current, board = heapq.heappop(openBackward)
-            # Expandir en la dirección backward
-            for i in range(8):
-                for j in range(8):
-                    if board[i][j] == 1:
-                        for k in range(8):
-                            if board[k][j] != 1:
-                                newBoard = [row[:] for row in board]
-                                newBoard[i][j] = 0
-                                newBoard[k][j] = 1
-                                heapq.heappush(openBackward, (heuristic(newBoard), newBoard))
-                                break
-        
-        # Actualizar el valor de la variable de límite superior si es necesario
-        upperLimit = min(upperLimit, minHeuristic)
-    
-        # Verificar si se encontró una solución
-        if minHeuristic == 0:
-            return 0, board
-    
-    # Si se llega a este punto, significa que no se encontró solución
-    print("No se encontró una solución.")
-    return float('inf'), None
+    forwardVisited = {initialStateTuple: None}
+    backwardVisited = {goalStateTuple: None}
 
+    forwardVisitedStates = []
+    backwardVisitedStates = []
 
+    meetingPoint = None
 
-"""
-Pseudocódigo:
+    while forwardQueue and backwardQueue:
+        _, forwardState = heapq.heappop(forwardQueue)
+        forwardVisitedStates.append(list(forwardState))
 
-1   gF (start) := gB(goal) := 0; OpenF := {start};
-    OpenB := {goal}; U := ∞
-2   while (OpenF != ∅) and (OpenB != ∅) do
-3       C := min(prminF , prminB)
-4       if U ≤ max(C, fminF , fminB, gminF + gminB + )
-        then
-5           return U
-6       if C = prminF then
-7           // Expand in the forward direction
-8       choose n ∈ OpenF for which prF (n) = prminF
-        and gF (n) is minimum
-9       move n from OpenF to ClosedF
-10      for each child c of n do
-11          if c ∈ OpenF ∪ ClosedF and gF (c) ≤ gF (n) + cost(n, c) 
-            then
-12              continue
-13          if c ∈ OpenF ∪ ClosedF then
-14              remove c from OpenF ∪ ClosedF
-15          gF (c) := gF (n) + cost(n, c)
-16          add c to OpenF
-17          if c ∈ OpenB then
-18              U := min(U,gF (c) + gB(c))
-19          else
-20              // Expand in the backward direction, analogously
-21return ∞
+        if list_to_tuple(forwardState) in backwardVisited:
+            meetingPoint = forwardState
+            break
 
-"""
-# Completar función con el algoritmo MM
+        for child in getSuccessors(forwardState):
+            childTuple = list_to_tuple(child)
+            if childTuple not in forwardVisited:
+                forwardVisited[childTuple] = list_to_tuple(forwardState)
+                heapq.heappush(forwardQueue, (heuristic(child), child))
 
-# Imprimir cada movimiento
+        _, backwardState = heapq.heappop(backwardQueue)
+        backwardVisitedStates.append(list(backwardState))
 
-# Resolver el problema de las 8 reinas con A* y MM
+        if list_to_tuple(backwardState) in forwardVisited:
+            meetingPoint = backwardState
+            break
 
-# Tablero inicial sin reinas
-initialchessboard = [[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0]]
+        for child in getSuccessors(backwardState):
+            childTuple = list_to_tuple(child)
+            if childTuple not in backwardVisited:
+                backwardVisited[childTuple] = list_to_tuple(backwardState)
+                heapq.heappush(backwardQueue, (heuristic(child), child))
+
+    if meetingPoint:
+        path = []
+        state = list_to_tuple(meetingPoint)
+        while state:
+            path.append(state)
+            state = forwardVisited[state]
+        path.reverse()
+
+        state = list_to_tuple(meetingPoint)
+        state = backwardVisited[state]
+        while state:
+            path.append(state)
+            state = backwardVisited[state]
+
+        return [list(map(list, p)) for p in path], meetingPoint
+
+    return forwardVisitedStates + backwardVisitedStates, meetingPoint
+
+# Ejemplo de uso del algoritmo A*
+initial_chessboard = [[0] * 8 for _ in range(8)]
 print("Tablero Inicial")
-drawBoard(initialchessboard)
-
-# Tablero con las reinas colocadas ejemplo de solución
-solutionchessboard = [[0, 0, 0, 0, 1, 0, 0, 0],[0, 0, 0, 0, 0, 0, 1, 0],[0, 0, 1, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 1, 0, 0],[0, 0, 0, 0, 0, 0, 0, 1],[1, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 1, 0, 0, 0, 0],[0, 1, 0, 0, 0, 0, 0, 0]]
-print("Tablero Solución")
-drawBoard(solutionchessboard)
-
-# Ejemplo de tablero para resolver el problema de las 8 reinas
-ejemplochessboard = [[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[1, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0]]
+drawBoard(initial_chessboard)
 
 print("---- A* Algorithm ---- ")
-drawBoard(ejemplochessboard)
-movimientos, solution = solveNQueens(ejemplochessboard, 1)
-drawBoard(solution)
+solution = solveNQueensAStar()
+if solution:
+    drawBoard(solution)
+else:
+    print("No se encontró una solución.")
 
 print("---- MM Algorithm ---- ")
-print("hellooo")
-print("Tablero inicial")
-drawBoard(initialchessboard)
-
-heuristic_value, solution = solveNQueensMM()
-if solution is not None:
-    print("Tablero con la solución:")
+solution = mmSolver(initial_chessboard)
+if solution:
     drawBoard(solution)
 else:
     print("No se encontró una solución.")
