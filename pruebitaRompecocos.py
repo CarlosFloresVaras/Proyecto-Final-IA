@@ -157,7 +157,7 @@ tableroInicial = [
     [6, 7, 8]
 ]
 
-# tableroInicial = [3, 1, 2],[4, 0, 5],[6, 7, 8]
+# tableroInicial = [3, 1, 2],[4, 0, 5],[6, 7, 8] # Tablero inicial 3, 1, 2, 4, 0, 5, 6, 7, 8
 
 print("---- A* Algorithm ---- ")
 start_time = time.perf_counter_ns()

@@ -1,13 +1,14 @@
 import heapq
 import time
 from colorama import Fore, Back, Style, init
+import random
 
 # Función que dibuja el tablero de ajedrez con las reinas en sus posiciones
 def drawBoard(chessboard):
     for i in range(8):
         for j in range(8):
             if chessboard[i][j] == 1:
-                print(" Q ", end="")
+                print(" ♛ ", end="")
             else:
                 if (i + j) % 2 == 0:
                     print(" □ ", end="")
@@ -137,16 +138,120 @@ def getSuccessors(board):
                     l -= 1
     return successors
 
-def mmSolver(initialState):
-    goalState = [[0, 0, 0, 0, 1, 0, 0, 0],
-                 [0, 0, 0, 0, 0, 0, 1, 0],
-                 [0, 0, 1, 0, 0, 0, 0, 0],
-                 [0, 0, 0, 0, 0, 1, 0, 0],
-                 [0, 0, 0, 0, 0, 0, 0, 1],
-                 [1, 0, 0, 0, 0, 0, 0, 0],
-                 [0, 0, 0, 1, 0, 0, 0, 0],
-                 [0, 1, 0, 0, 0, 0, 0, 0]]
+feasible_solutions = [   # SOLUTION 1
+                        [[1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0]],
+                        # SOLUTION 2
+                        [[1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0]],
+                        # SOLUTION 3
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0]],
+                        # SOLUTION 4
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0]],
+                        # SOLUTION 5
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0]],
+                        # SOLUTION 6
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0]],
+                        # SOLUTION 7
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0]],
+                        # SOLUTION 8
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0]],
+                        # SOLUTION 9
+                        [[0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0]],
+                        # SOLUTION 10
+                        [[0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0]],
+                        # SOLUTION 11
+                        [[0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0]],
+                        # SOLUTION 12
+                        [[0, 0, 1, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0]]
+                     ]
 
+
+def mmSolver(initialState = [[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 0]]):
+    #goalstate una de las 12 soluciones posibles en feasible_solutions
+    goalState = feasible_solutions[random.randint(0, 11)]
     forwardQueue = [(heuristic(initialState), initialState)]
     backwardQueue = [(heuristic(goalState), goalState)]
 
@@ -192,6 +297,7 @@ def mmSolver(initialState):
                 heapq.heappush(backwardQueue, (heuristic(child), child))
 
     if meetingPoint:
+        print("Meeting point found!")
         path = []
         state = list_to_tuple(meetingPoint)
         while state:
@@ -206,26 +312,32 @@ def mmSolver(initialState):
             state = backwardVisited[state]
 
         return [list(map(list, p)) for p in path], meetingPoint
-
-    return forwardVisitedStates + backwardVisitedStates, meetingPoint
+    else:
+        return forwardVisitedStates + backwardVisitedStates, meetingPoint
 
 # Ejemplo de uso del algoritmo A*
 initial_chessboard = [[0] * 8 for _ in range(8)]
-print("Tablero Inicial")
-drawBoard(initial_chessboard)
 
-print("---- A* Algorithm ---- ")
+print("---- A* Algorithm ----\n")
+print("---- Tablero Inicial ----\n")
+drawBoard(initial_chessboard)
 solution = solveNQueensAStar()
 if solution:
+    print("---- Solución ----\n")
     drawBoard(solution)
 else:
     print("No se encontró una solución.")
-"""
-print("---- MM Algorithm ---- ")
-solution = mmSolver(initial_chessboard)
+
+print("---- MM Algorithm ----\n")
+print("---- Tablero Inicial ----")
+drawBoard(initial_chessboard)
+solution, meeting = mmSolver(initial_chessboard)
 if solution:
-    drawBoard(solution)
+    print("---- Solución ----\n")
+    drawBoard(solution[-1])
+
+    print("---- Meeting Point ----\n")
+    print(meeting)
 else:
     print("No se encontró una solución.")
-"""
 
