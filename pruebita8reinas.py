@@ -1,6 +1,5 @@
 import heapq
 import time
-from colorama import Fore, Back, Style, init
 import random
 
 # Función que dibuja el tablero de ajedrez con las reinas en sus posiciones
