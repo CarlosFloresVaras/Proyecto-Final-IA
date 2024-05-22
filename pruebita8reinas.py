@@ -7,14 +7,29 @@ def drawBoard(chessboard):
     for i in range(8):
         for j in range(8):
             if chessboard[i][j] == 1:
-                print("Q ", end="")
+                print(" Q ", end="")
             else:
                 if (i + j) % 2 == 0:
-                    print("□ ", end="")
+                    print(" □ ", end="")
                 else:
-                    print("■ ", end="")
+                    print(" ■ ", end="")
         print()
     print()
+
+def drawBoardStrg(chessboard): # Función que dibuja el tablero de ajedrez con las reinas en sus posiciones pero en vez de imprimir lo hace string y retorna el string
+    board = ""
+    for i in range(8):
+        for j in range(8):
+            if chessboard[i][j] == 1:
+                board += " ♛ "
+            else:
+                if (i + j) % 2 == 0:
+                    board += " □ "
+                else:
+                    board += " ■ "
+        board += "\n"
+    board += "\n"
+    return board
 
 # Función heurística para el problema de las 8 reinas (número de conflictos)
 def heuristic(board):
@@ -205,10 +220,12 @@ if solution:
     drawBoard(solution)
 else:
     print("No se encontró una solución.")
-
+"""
 print("---- MM Algorithm ---- ")
 solution = mmSolver(initial_chessboard)
 if solution:
     drawBoard(solution)
 else:
     print("No se encontró una solución.")
+"""
+

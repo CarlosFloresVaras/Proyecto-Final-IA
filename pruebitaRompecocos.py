@@ -40,7 +40,7 @@ def obtenerSucesores(puzzleState):
 # Resolver Puzzle
 
 ## Algoritmo A*
-def astarSolver(initialState):
+def astarSolver(initialState = [[3, 1, 2],[4, 0, 5],[6, 7, 8]]):
     currentState = initialState
     priorityQueue = [(heuristica(initialState), initialState)]
     visited = set()
@@ -157,6 +157,8 @@ tableroInicial = [
     [6, 7, 8]
 ]
 
+# tableroInicial = [3, 1, 2],[4, 0, 5],[6, 7, 8]
+
 print("---- A* Algorithm ---- ")
 start_time = time.perf_counter_ns()
 movimientos, solucion = astarSolver(tableroInicial)
@@ -175,7 +177,7 @@ start_time = time.perf_counter_ns()
 movimientos_mm, meetingPoint = mmSolver(tableroInicial)
 mmSolver_time = (time.perf_counter_ns() - start_time) * 1e-9
 mostrarMovimientos(movimientos_mm)
-print(f"Solución en {len(movimientos_mm)} movimientos: Tiempo de ejecución: {mmSolver_time} s a ver nmms")
+print(f"Solución en {len(movimientos_mm)} movimientos: Tiempo de ejecución: {mmSolver_time} s")
 
 if meetingPoint:
     print("Meeting-point")
